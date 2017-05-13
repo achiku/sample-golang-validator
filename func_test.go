@@ -40,11 +40,23 @@ func TestUserValidateWithCustomFunc(t *testing.T) {
 		"twitter": "://twitter/_achiku"
 	}
 	`
+	// null twitter url
+	v3 := `
+	{
+		"firstname": "Akira",
+		"lastname": "Chiku",
+		"age": 30,
+		"email": "akira.chiku@gmail.com",
+		"phonenumber": "09012341234"
+	}
+	`
 	data := []struct {
+		Name    string
 		Request string
 	}{
-		{Request: v1},
-		{Request: v2},
+		{Name: "perfect input", Request: v1},
+		{Name: "wrong input", Request: v2},
+		{Name: "null string", Request: v3},
 	}
 	for _, d := range data {
 		decoder := json.NewDecoder(strings.NewReader(d.Request))
@@ -54,11 +66,14 @@ func TestUserValidateWithCustomFunc(t *testing.T) {
 		}
 
 		if err := validate.Struct(u); err != nil {
-			pretty.Print(u)
+			t.Logf("[%s]", d.Name)
 			for _, e := range err.(validator.ValidationErrors) {
 				t.Errorf(
 					"%s(%s) %s validation failed: %s", e.Namespace(), e.Kind(), e.ActualTag(), e.Value())
 			}
+		}
+		if !u.Twitter.Valid {
+			t.Logf("[%s] twitter url is null", d.Name)
 		}
 	}
 }
